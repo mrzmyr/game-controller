@@ -320,7 +320,8 @@ class Game extends Component {
           { this.state.gamepadConnected && !this.state.loading && !this.state.gameover &&
             <div>
               {range(this.state.lifes).map(l => this.state.fatpill ? '💜' : '❤️' )} 
-              {+new Date() - this.state.lastUlti > 10000 && '💊'}
+              {+new Date() - this.state.lastUlti >= 10000 && '💊'}
+              {+new Date() - this.state.lastUlti < 10000 && 10 - Math.round((+new Date() - this.state.lastUlti) / 1000)}
             </div>
           }
           {!this.state.gamepadConnected && <code>Please connect gamepad</code>}
