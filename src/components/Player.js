@@ -54,6 +54,11 @@ export default class Player {
   activateEffect(params) {
     let timestamp = +new Date();
 
+    if(params.id === 'bigshot') {
+      this.effects[params.id] = true;
+      this.ts[params.id] = +new Date();
+    }
+
     if(params.id === 'ultimate' && timestamp - this.ts[params.id] > 10000) {
       this.recentColor = this.body.render.fillStyle;
       this.body.render.fillStyle = COLOR_PLAYER_ULTIMATE_BODY;
@@ -91,8 +96,7 @@ export default class Player {
   }
 
   fireBulletToDirection(direction, speed = 3.5) {
-    speed = this.effects.fatpill ? 6 : speed;
-    let bulletRadius = 5;
+    let bulletRadius = this.effects.bigshot ? 10 : 5;
     let margin = this.radius + bulletRadius;
     let bullet = Bodies.circle(
       this.body.position.x + (margin * direction.x), 

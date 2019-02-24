@@ -207,6 +207,10 @@ class Game extends Component {
             player.lifes += 1;
           }
 
+          if(item.itemType === 'bigshot') {
+            this.players[0].activateEffect({ id: 'bigshot' })
+          }
+
           for (let i = 0; i < room.items.length; i++) {
             if(
               room.items[i].body.id === item.id ||
