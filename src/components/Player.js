@@ -12,6 +12,10 @@ import {
   COLOR_PLAYER_FATPILL,
 } from '../colors'
 
+import { Howl } from 'howler';
+
+var sound_fire = new Howl({ src: ['./sounds/bow.wav'] });
+
 export default class Player {
   constructor({ engine }, { x, y }) {
   
@@ -113,6 +117,7 @@ export default class Player {
     let fireSpeed = (this.effects.ultimate ? 10 : 300);
 
     if((timestamp - this.ts.shot) > fireSpeed) {
+      sound_fire.play();
       this.fireBulletToDirection(direction)
       this.ts.shot = +new Date();
     }

@@ -16,6 +16,17 @@ import { generateRooms } from './roomGenerator'
 import { range } from './helpers'
 import { COLOR_BG, COLOR_WALLS } from './colors'
 
+import { Howl } from 'howler';
+var sound_drink_1 = new Howl({ src: ['./sounds/bubble.wav'] });
+var sound_drink_2 = new Howl({ src: ['./sounds/bottle.wav'] });
+var sound_door = new Howl({ src: ['./sounds/door.wav'] });
+var sound_bg = new Howl({ src: ['./sounds/bg.mp3'], loop: true });
+var sound_start = new Howl({ src: ['./sounds/selection.wav'] });
+var sound_dead = new Howl({ src: ['./sounds/pain.wav'] });
+var sound_kill = new Howl({ src: ['./sounds/pain.wav'] });
+var sound_victory_1 = new Howl({ src: ['./sounds/victory.mp3'] });
+var sound_victory_2 = new Howl({ src: ['./sounds/vic.mp3'] });
+var sound_hit = new Howl({ src: ['./sounds/hit.mp3'] });
 
 class Game extends Component {
   constructor(props) {
@@ -116,10 +127,12 @@ class Game extends Component {
         let b = pair.bodyB;
 
         if(a.label === 'enemy' && b.label === 'bullet-player') {
+          sound_hit.play()
           a.lifes -= 1;
           Composite.remove(this.engine.world, b)
 
           if(a.lifes <= 0) {
+            sound_victory_2.play();
             for (let i = 0; i < room.enemies.length; i++) {
               if(room.enemies[i].body.id === a.id) {
                 room.enemies[i].die();
@@ -130,17 +143,20 @@ class Game extends Component {
           }
 
           if(room.enemies.length === 0) {
+            sound_victory_1.play();
             room.doors.map(d => d.unlock())
           }
         }
 
         if(a.label === 'player' && b.label === 'bullet-enemy') {
+          sound_hit.play()
           Composite.remove(this.engine.world, b)
 
           a.lifes -= 1;
           this.setState({ lifes: a.lifes })
 
-          if(a.lifes <= 0 && false) {
+          if(a.lifes <= 0) {
+            sound_dead.play();
             Composite.remove(this.engine.world, a)
             this.players = [];
             this.setState({ gameover: true })
@@ -158,6 +174,7 @@ class Game extends Component {
           let door = a.label === 'player' ? b : a;
 
           if(!door.locked) {
+            sound_door.play()
             this.cleanRoom()
             this.setupRoom({ id: door.targetRoom, playerPosition: {
               left: { x: this.width - 100, y: this.height / 2, },
@@ -178,12 +195,14 @@ class Game extends Component {
           Composite.remove(this.engine.world, item)
 
           if(item.itemType === 'fatpill') {
+            sound_drink_2.play();
             this.players[0].activateEffect({ id: 'fatpill' })
             player.lifes = 1;
             this.setState({ fatpill: true, lifes: player.lifes })
           }
 
           if(item.itemType === 'life') {
+            sound_drink_1.play();
             this.setState({ lifes: this.state.lifes + 1 })
             player.lifes += 1;
           }
@@ -247,10 +266,14 @@ class Game extends Component {
         Engine.update(this.engine, 1000 / 60);
     }.bind(this))();
 
-    this.start();
+    // this.start();
   }
 
   async start() {
+    sound_start.play()
+    sound_bg.stop()
+    sound_bg.play()
+
     let player = new Player({
       engine: this.engine,
       render: this.render
