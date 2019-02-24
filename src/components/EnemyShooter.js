@@ -42,7 +42,7 @@ export default class EnemyShooter extends Enemy {
       this.fireBulletToBody(focusPlayer.body)
     }
 
-    if(timestamp - this.lastMove > 1000) {
+    if(timestamp - this.lastMove > 5000) {
       this.lastMove = +new Date();
       if(Math.random() < 0.3) {
         this.moveToBody(focusPlayer.body);
