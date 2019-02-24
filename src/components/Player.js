@@ -42,12 +42,12 @@ export default class Player {
     this.ulti = false;
   }
 
-  moveToDirection(direction, speed = 3) {
-    speed = this.effects.fatpill ? 6 : speed;
+  moveToDirection(direction, speed = 2) {
+    speed = this.effects.fatpill ? 4 : speed;
 
-    Body.setPosition(this.body, {
-      x: this.body.position.x + direction.x * speed,
-      y: this.body.position.y + direction.y * speed,
+    Body.setVelocity(this.body, {
+      x: direction.x * speed,
+      y: direction.y * speed,
     })
   }
 
