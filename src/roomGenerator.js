@@ -13,16 +13,13 @@ import pill from './svgs/pill.svg';
  
 export async function generateRooms ({ engine, render, width, height }) {
 
-  let heartsvg = await fetch(heart).then(r => r.text());
-  let pillsvg = await fetch(pill).then(r => r.text());
-
   return {
     0: {
       enemies: [
-        new EnemyDubber({ engine, render }, { x: 100, y: 100 }),
       ],
       items: [
-        new Item({ engine, render }, { type: 'fatpill', svg: pillsvg, x: random(50, width - 50), y: random(50, height - 50)}),
+        new Item({ engine, render }, { type: 'fatpill', x: random(100, width - 100), y: random(100, height - 100)}),
+        new Item({ engine, render }, { type: 'life', x: random(100, width - 100), y: random(100, height - 100)}),
       ],
       doors: [
         new Door({ engine, render }, { targetRoom: 1, type: 'left' }),
@@ -30,12 +27,9 @@ export async function generateRooms ({ engine, render, width, height }) {
     },
     1: {
       enemies: [
-        new EnemyShooter({ engine, render }, { x: random(50, width - 50), y: random(50, height - 50)}),
-        new EnemyShooter({ engine, render }, { x: random(50, width - 50), y: random(50, height - 50)}),
-        new EnemyStation({ engine, render }, {x: 100, y: 100}),
         new EnemyStation({ engine, render }, {x: width - 100, y: 100}),
-        new EnemyStation({ engine, render }, {x: 100, y: height - 100}),
-        new EnemyStation({ engine, render }, {x: width - 100, y: height - 100}),
+        new EnemyStation({ engine, render }, { x: random(100, width - 100), y: random(100, height - 100)}),
+        new EnemyStation({ engine, render }, { x: random(100, width - 100), y: random(100, height - 100)}),
       ],
       items: [
       ],
@@ -47,14 +41,13 @@ export async function generateRooms ({ engine, render, width, height }) {
     },
     2: {
       enemies: [
-        new EnemyShooter({ engine, render }, { x: random(50, width - 50), y: random(50, height - 50)}),
-        new EnemyShooter({ engine, render }, { x: random(50, width - 50), y: random(50, height - 50)}),
-        new EnemyShooter({ engine, render }, { x: random(50, width - 50), y: random(50, height - 50)}),
+        new EnemyDubber({ engine, render }, { x: width - 100, y: height - 100 }),
+        new EnemyShooter({ engine, render }, { x: random(100, width - 100), y: random(100, height - 100)}),
       ],
       items: [
-        new Item({ engine, render }, { type: 'fatpill', svg: pillsvg, x: random(50, width - 50), y: random(50, height - 50)}),
-        new Item({ engine, render }, { type: 'life', svg: heartsvg, x: random(50, width - 50), y: random(50, height - 50)}),
-        new Item({ engine, render }, { type: 'life', svg: heartsvg, x: random(50, width - 50), y: random(50, height - 50)}),
+        new Item({ engine, render }, { type: 'fatpill', x: random(100, width - 100), y: random(100, height - 100)}),
+        new Item({ engine, render }, { type: 'life', x: random(100, width - 100), y: random(100, height - 100)}),
+        new Item({ engine, render }, { type: 'life', x: random(100, width - 100), y: random(100, height - 100)}),
       ],
       doors: [
         new Door({ engine, render }, { targetRoom: 1, type: 'top' }),
@@ -62,13 +55,15 @@ export async function generateRooms ({ engine, render, width, height }) {
     },
     3: {
       enemies: [
-        new EnemyShooter({ engine, render }, { x: random(50, width - 50), y: random(50, height - 50)}),
-        new EnemyShooter({ engine, render }, { x: random(50, width - 50), y: random(50, height - 50)}),
-        new EnemyShooter({ engine, render }, { x: random(50, width - 50), y: random(50, height - 50)}),
+        new EnemyStation({ engine, render }, {x: 100, y: 100}),
+        new EnemyShooter({ engine, render }, { x: random(100, width - 100), y: random(100, height - 100)}),
+        new EnemyShooter({ engine, render }, { x: random(100, width - 100), y: random(100, height - 100)}),
+        new EnemyShooter({ engine, render }, { x: random(100, width - 100), y: random(100, height - 100)}),
+        new EnemyStation({ engine, render }, {x: width - 100, y: height - 100}),
       ],
       items: [
-        new Item({ engine, render }, { type: 'life', svg: heartsvg, x: random(50, width - 50), y: random(50, height - 50)}),
-        new Item({ engine, render }, { type: 'life', svg: heartsvg, x: random(50, width - 50), y: random(50, height - 50)}),
+        new Item({ engine, render }, { type: 'bigshot', x: random(100, width - 100), y: random(100, height - 100)}),
+        new Item({ engine, render }, { type: 'life', x: random(100, width - 100), y: random(100, height - 100)}),
       ],
       doors: [
         new Door({ engine, render }, { targetRoom: 1, type: 'right' }),
