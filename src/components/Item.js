@@ -8,27 +8,28 @@ import {
 import { 
   COLOR_ITEM_LIFE,
   COLOR_ITEM_FATPILL,
+  COLOR_ITEM_BIGSHOT,
 } from '../colors'
 
-import $ from 'jquery'
-
 export default class Item {
-  constructor({ engine }, { x, y, type, svg }) {
+  constructor({ engine }, { x, y, type }) {
   
     this.state = {};
     this.engine = engine;
 
-    let vertexSets = [];
+    let settings = {
+      life: { color: COLOR_ITEM_LIFE },
+      fatpill: { color: COLOR_ITEM_FATPILL },
+      bigshot: { color: COLOR_ITEM_BIGSHOT }
+    }[type]
 
-    $(svg).find('path').each(function(i, path) {
-      var points = Svg.pathToVertices(path);
-      vertexSets.push(Vertices.scale(points, 0.1, 0.1));
-    });
+    this.width = 15;
+    this.height = 15;
 
-    this.body = Bodies.fromVertices(x, y, vertexSets, { 
+    this.body = Bodies.rectangle(x, y, this.width, this.height, { 
       label: 'item', 
       itemType: type,
-      render: { fillStyle: type === 'life' ? COLOR_ITEM_LIFE : COLOR_ITEM_FATPILL },
+      render: { fillStyle: settings.color },
       chamfer: { radius: 3 }
     });
   }
