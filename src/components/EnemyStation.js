@@ -28,14 +28,20 @@ export default class EnemyStation extends Enemy {
       }
     });
 
-    this.lastShot = +new Date();
+    this.lastShot1 = +new Date();
+    this.lastShot2 = +new Date();
   }
 
   update(players) {
     let timestamp = +new Date();
 
-    if(timestamp - this.lastShot > 1000) {
-      this.lastShot = +new Date();
+    if(timestamp - this.lastShot1 > 500) {
+      this.lastShot1 = +new Date();
+      this.fireBulletStar()
+    }
+
+    if(timestamp - this.lastShot2 > 1000) {
+      this.lastShot2 = +new Date();
       this.fireBulletToDirection({ x: random(-1,1), y: 1 })
       this.fireBulletToDirection({ x: random(-1,1), y: -1 })
     }
