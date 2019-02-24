@@ -113,7 +113,7 @@ export default class Player {
 
     Body.setVelocity(bullet, { x: direction.x * speed, y: direction.y * speed });
     World.add(this.engine.world, [bullet]);
-    setTimeout(() => Composite.remove(this.engine.world, bullet), 1000)
+    setTimeout(() => Composite.remove(this.engine.world, bullet), 2000)
   }
 
   fire(direction) {
