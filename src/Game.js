@@ -16,7 +16,6 @@ import { generateRooms } from './roomGenerator'
 import { range } from './helpers'
 import { COLOR_BG, COLOR_WALLS } from './colors'
 
-window.decomp = require('poly-decomp');
 
 class Game extends Component {
   constructor(props) {
