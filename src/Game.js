@@ -329,7 +329,7 @@ class Game extends Component {
           {this.state.gamepadConnected && this.state.gameover && !this.state.loading && <code>Press the 'start' button</code>}
         </div>
         {/*<pre>{this.state.gamepadStr}</pre>*/}
-        <div style={{ width: '100%', height: '100%' }} ref={node => this.renderElement = node}></div>
+        <div style={{ width: '100%', height: '100%', textAlign: 'center' }} ref={node => this.renderElement = node}></div>
       </div>
     )
   }
