@@ -75,18 +75,18 @@ class Game extends Component {
 
     this.setState({ gamepadStr: JSON.stringify(gp, null, 2), })
 
+    if(this.state.gameover && gp.buttons[8].pressed) {
+      this.players = [];
+      this.setState({ fatpill: false })
+      this.start()
+    }
+
     if(this.rooms === null || this.state.loading) return;
 
     let room = this.rooms[this.currentRoomId];
 
     room.enemies.forEach(c => c.update(this.players));
     this.players.forEach(c => c.update());
-
-    if(this.state.gameover && gp.buttons[8].pressed) {
-      this.players = [];
-      this.setState({ fatpill: false })
-      this.start()
-    }
 
     if(this.state.gameover) return;
 
