@@ -175,6 +175,8 @@ class Game extends Component {
           let item = a.label === 'item' ? a : b;
           let player = a.label === 'player' ? a : b;
 
+          Composite.remove(this.engine.world, item)
+
           if(item.itemType === 'fatpill') {
             this.players[0].activateEffect({ id: 'fatpill' })
             player.lifes = 1;
@@ -195,8 +197,6 @@ class Game extends Component {
               break;
             }
           }
-
-          Composite.remove(this.engine.world, item.parent || item)
         }
 
       })
