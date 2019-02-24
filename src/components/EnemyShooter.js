@@ -21,7 +21,7 @@ export default class EnemyShooter extends Enemy {
 
     this.body = Bodies.circle(x, y, this.radius, { 
       label: 'enemy',
-      lifes: 3,
+      lifes: 5,
       render: {
         fillStyle: COLOR_ENEMY_SHOOTER
       }

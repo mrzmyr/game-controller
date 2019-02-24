@@ -42,8 +42,8 @@ export default class EnemyStation extends Enemy {
 
     if(timestamp - this.lastShot2 > 1000) {
       this.lastShot2 = +new Date();
-      this.fireBulletToDirection({ x: random(-1,1), y: 1 })
-      this.fireBulletToDirection({ x: random(-1,1), y: -1 })
+      this.fireBulletToDirection({ x: random(-1,1), y: 1 }, 2)
+      this.fireBulletToDirection({ x: random(-1,1), y: -1 }, 2)
     }
   }
 }

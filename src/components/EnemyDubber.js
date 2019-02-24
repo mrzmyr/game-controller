@@ -20,7 +20,7 @@ export default class EnemyShooter extends Enemy {
 
     this.body = Bodies.rectangle(x, y, this.width, this.height, { 
       label: 'enemy',
-      lifes: 10,
+      lifes: 20,
       render: {
         fillStyle: COLOR_ENEMY_DUBBER
       }
@@ -85,7 +85,7 @@ export default class EnemyShooter extends Enemy {
       this.fireBulletToBody(focusPlayer.body, 3.5, 2000)
     }
 
-    let intervalLShot1 = this.body.lifes * 1000 / 2;
+    let intervalLShot1 = this.body.lifes * 1000 / 3;
 
     if(timestamp - this.lastShot1 > intervalLShot1) {
       Body.setAngularVelocity(this.body, 0.05)
@@ -106,7 +106,7 @@ export default class EnemyShooter extends Enemy {
     super.die()
 
     for (var i = 0; i < 100; i++) {
-      this.fireBulletToDirection({ x: Math.random(), y: Math.random() })
+      this.fireBulletToDirection({ x: Math.random(), y: Math.random() }, 3, 4000)
     }
     this.engine.timing.timeScale = 0.1;
     setTimeout(() => this.engine.timing.timeScale = 1, 10000)
