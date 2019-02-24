@@ -289,7 +289,12 @@ class Game extends Component {
 
     Engine.clear(this.engine);
 
-    this.setState({ loading: true })
+    this.setState({ 
+      loading: true,
+      lastUlti: +new Date(),
+      lifes: player.body.lifes,
+      gameover: false,
+    })
 
     this.rooms = await generateRooms({
       engine: this.engine,
@@ -300,10 +305,6 @@ class Game extends Component {
 
     this.setupCollisions();
 
-    this.setState({ 
-      gameover: false,
-      lifes: player.body.lifes
-    })
     this.cleanRoom()
     this.setupRoom({
       id: 0, 
