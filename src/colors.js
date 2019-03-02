@@ -16,3 +16,5 @@ export const COLOR_ITEM_BIGSHOT = '#5ac54f'
 export const COLOR_ENEMY_SHOOTER = '#94fdff'
 export const COLOR_ENEMY_STATION = '#e07438'
 export const COLOR_ENEMY_DUBBER = '#FFF'
+
+export const COLOR_PLAYERS = ['#de4383', '#dbff3d', '#3ec1d3', '#b61aae']

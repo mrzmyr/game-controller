@@ -1,8 +1,6 @@
 import { 
   World,
   Bodies,
-  Vertices,
-  Svg
 } from 'matter-js';
 
 import { 

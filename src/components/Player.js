@@ -17,29 +17,37 @@ import { Howl } from 'howler';
 var sound_fire = new Howl({ src: ['./sounds/bow.wav'] });
 
 export default class Player {
-  constructor({ engine }, { x, y }) {
+  constructor({ engine, index }, { x, y, color = COLOR_PLAYER }) {
   
     this.state = {};
     this.engine = engine;
 
     this.radius = 20;
-    this.color = COLOR_PLAYER;
+    this.color = color;
 
     this.body = Bodies.circle(x, y, this.radius, { 
       label: 'player', 
       render: { fillStyle: this.color },
-      lifes: 3
+      lifes: 3,
+      index
     });
 
+    this.dead = false;
+
+    this.body.lastItemLoop = +new Date();
+    this.body.lastHit = +new Date();
+    this.body.lastDoorEntered = +new Date();
+
     this.effects = {
-      ultimate: false
+      ultimate: false,
+      bigshot: false,
+      fatpill: false
     }
 
     this.ts = {
        shot: +new Date(),
        ultimate: +new Date()
     }
-    this.ulti = false;
   }
 
   moveToDirection(direction, speed = 2) {
@@ -55,7 +63,8 @@ export default class Player {
     let timestamp = +new Date();
 
     if(params.id === 'bigshot') {
-      this.effects[params.id] = true;
+      if(!this.effects[params.id]) this.effects[params.id] = 0;
+      this.effects[params.id] += 10;
       this.ts[params.id] = +new Date();
     }
 
@@ -89,14 +98,13 @@ export default class Player {
   }
 
   deactivateEffects() {
-    console.log(Object.keys(this.effects).filter(k => !!this.effects[k]))
     Object.keys(this.effects)
       .filter(k => !!this.effects[k])
       .forEach(k => this.deactivateEffect({ id: k }))
   }
 
   fireBulletToDirection(direction, speed = 3.5) {
-    let bulletRadius = this.effects.bigshot ? 10 : 5;
+    let bulletRadius = this.effects.bigshot !== false ? this.effects.bigshot : 5;
     let margin = this.radius + bulletRadius;
     let bullet = Bodies.circle(
       this.body.position.x + (margin * direction.x), 
@@ -127,6 +135,10 @@ export default class Player {
     }
   }
 
+  kill() {
+    this.dead = true;
+  }
+  
   update() {
   }
 

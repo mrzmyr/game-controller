@@ -1,5 +1,6 @@
 import { 
   Bodies,
+  Common
 } from 'matter-js';
 
 import Enemy from './Enemy'
@@ -7,8 +8,6 @@ import Enemy from './Enemy'
 import { 
   COLOR_ENEMY_SHOOTER,
 } from '../colors'
-
-import { random } from '../helpers'
 
 export default class EnemyShooter extends Enemy {
   constructor({ engine }, { x, y }) {
@@ -32,7 +31,7 @@ export default class EnemyShooter extends Enemy {
   }
 
   update(players) {
-    let focusPlayer = players[random(0, players.length - 1)];
+    let focusPlayer = players[Common.choose(Object.keys(players))];
     let timestamp = +new Date();
 
     if(!focusPlayer) return;

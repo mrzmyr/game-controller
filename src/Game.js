@@ -9,21 +9,21 @@ import {
   Body
 } from 'matter-js';
 
-import Player from './components/Player'
-import gamepad from './services/gamepad'
-import { generateRooms } from './roomGenerator'
+import Player from './components/Player';
+import gamepad from './services/gamepad';
+import { generateRooms, generateRoom, generateDoor } from './roomGenerator';
 
-import { range } from './helpers'
-import { COLOR_BG, COLOR_WALLS } from './colors'
+import { range, random } from './helpers';
+import { COLOR_BG, COLOR_WALLS, COLOR_PLAYERS } from './colors';
 
 import { Howl } from 'howler';
+
 var sound_drink_1 = new Howl({ src: ['./sounds/bubble.wav'] });
 var sound_drink_2 = new Howl({ src: ['./sounds/bottle.wav'] });
 var sound_door = new Howl({ src: ['./sounds/door.wav'] });
 var sound_bg = new Howl({ src: ['./sounds/bg.mp3'], loop: true });
 var sound_start = new Howl({ src: ['./sounds/selection.wav'] });
 var sound_dead = new Howl({ src: ['./sounds/pain.wav'] });
-var sound_kill = new Howl({ src: ['./sounds/pain.wav'] });
 var sound_victory_1 = new Howl({ src: ['./sounds/victory.mp3'] });
 var sound_victory_2 = new Howl({ src: ['./sounds/vic.mp3'] });
 var sound_hit = new Howl({ src: ['./sounds/hit.mp3'] });
@@ -40,10 +40,10 @@ class Game extends Component {
       gameover: true
     };
 
-    this.players = []
+    this.players = {};
     this.rooms = null;
 
-    this.currentRoomId = 0;
+    this.currentRoomIndex = 0;
 
     this.renderElement = <div style={{ width: '100%', height: '100%' }}></div>;
   }
@@ -51,8 +51,10 @@ class Game extends Component {
   cleanRoom() {
     World.clear(this.engine.world)
   }
+  
+  setupRoom({ id, playerPosition }) {
 
-  setupRoom(opts) {
+    let gp = gamepad.getState();
 
     World.add(this.engine.world, [
         Bodies.rectangle(400, 0, 800, 50, { isStatic: true, label: 'wall', render: { fillStyle: COLOR_WALLS }  }),
@@ -61,13 +63,32 @@ class Game extends Component {
         Bodies.rectangle(0, 300, 50, 600, { isStatic: true, label: 'wall', render: { fillStyle: COLOR_WALLS }  })
     ]);
 
-    this.currentRoomId = opts.id;
-    let room = this.rooms[this.currentRoomId];
+    console.log(id);
+    
+    this.currentRoomIndex = id;
+    this.rooms[this.currentRoomIndex].visited = true;
+    let room = this.rooms[this.currentRoomIndex];
 
-    this.players.forEach(c => {
-      c.addToWorld()
-      Body.setPosition(c.body, { x: opts.playerPosition.x, y: opts.playerPosition.y })
+    gp.gamepads.forEach((g, i) => {
+      if(this.players[i]) return;
+      let player = new Player({
+        engine: this.engine,
+        render: this.render,
+        index: g.index
+      }, { 
+        color: COLOR_PLAYERS[i],
+        x: random(100, this.width - 100), 
+        y: random(100, this.height - 100)
+      })
+      this.players[g.index] = player;
     })
+    
+    Object.keys(this.players).forEach(i => {
+      let p = this.players[i];
+      p.addToWorld()
+      Body.setPosition(p.body, { x: playerPosition.x, y: playerPosition.y })
+    })
+
     room.doors.forEach(c => c.addToWorld())
     room.items.forEach(c => c.addToWorld())
     room.enemies.forEach(c => c.addToWorld())
@@ -86,41 +107,51 @@ class Game extends Component {
 
     this.setState({ gamepadStr: JSON.stringify(gp, null, 2), })
 
-    if(this.state.gameover && gp.buttons[8].pressed) {
-      this.players = [];
-      this.setState({ fatpill: false })
-      this.start()
-    }
+    gp.gamepads.forEach((g, i) => {
+      if(this.state.gameover && g.start.pressed) {
+        this.players = {};
+        this.start();
+      }
+    });
 
     if(this.rooms === null || this.state.loading) return;
 
-    let room = this.rooms[this.currentRoomId];
+    let room = this.rooms[this.currentRoomIndex];
 
     room.enemies.forEach(c => c.update(this.players));
-    this.players.forEach(c => c.update());
+    Object.keys(this.players).forEach(i => this.players[i].update());
 
     if(this.state.gameover) return;
 
-    let gamepadPlayer = this.players[0];
+    gp.gamepads.forEach((g, i) => {
+      let gamepadPlayer = this.players[g.index];
+      if(!gamepadPlayer) return;
 
-    if(gp.buttons[9].pressed) {
+      if(g.rightStick.pressed) {
+        gamepadPlayer.activateEffect({ id: 'ultimate' })
+        this.setState({ lastUlti: +new Date() })
+      }
+
+      if(Math.abs(g.rightStick.x) > 0.95 || Math.abs(g.rightStick.y) > 0.95) {
+        gamepadPlayer.fire({ x: g.rightStick.x, y: g.rightStick.y })
+      }
+
+      gamepadPlayer.moveToDirection({ x: g.leftStick.x, y: g.leftStick.y })
+    })
+  }
+
+  getPlayerById(id) {
+    let keys = Object.keys(this.players);
+    for (let i = 0; i < keys.length; i++) {
+      if(this.players[keys[i]].body.id === id) {
+        return this.players[keys[i]];
+      }
     }
-
-    if(gp.buttons[7].pressed) {
-      gamepadPlayer.activateEffect({ id: 'ultimate' })
-      this.setState({ lastUlti: +new Date() })
-    }
-
-    if(Math.abs(gp.axes[3]) > 0.95 || Math.abs(gp.axes[4]) > 0.95) {
-      gamepadPlayer.fire({ x: gp.axes[3], y: gp.axes[4] })
-    }
-
-    gamepadPlayer.moveToDirection({ x: gp.axes[0], y: gp.axes[1] })
   }
 
   setupCollisions() {
     Events.on(this.engine, 'collisionStart', (event) => {
-      let room = this.rooms[this.currentRoomId];
+      let currentRoom = this.rooms[this.currentRoomIndex];
 
       event.pairs.forEach(pair => {
         let a = pair.bodyA;
@@ -133,34 +164,41 @@ class Game extends Component {
 
           if(a.lifes <= 0) {
             sound_victory_2.play();
-            for (let i = 0; i < room.enemies.length; i++) {
-              if(room.enemies[i].body.id === a.id) {
-                room.enemies[i].die();
-                room.enemies.splice(i, 1);
+            for (let i = 0; i < currentRoom.enemies.length; i++) {
+              if(currentRoom.enemies[i].body.id === a.id) {
+                currentRoom.enemies[i].die();
+                currentRoom.enemies.splice(i, 1);
                 break;
               }
             }
           }
 
-          if(room.enemies.length === 0) {
+          if(currentRoom.enemies.length === 0) {
             sound_victory_1.play();
-            room.doors.map(d => d.unlock())
+            currentRoom.doors.map(d => d.unlock())
           }
         }
 
         if(a.label === 'player' && b.label === 'bullet-enemy') {
+          if(this.state.gameover) return;
+          
+          // if(+new Date() - a.lastHit < 100) return;
+          // a.lastHit = +new Date();
+
           sound_hit.play()
           Composite.remove(this.engine.world, b)
-
-          a.lifes -= 1;
-          this.setState({ lifes: a.lifes })
+          
+          a.lifes = a.lifes <= 0 ? 0 : a.lifes - 1;
 
           if(a.lifes <= 0) {
             sound_dead.play();
             Composite.remove(this.engine.world, a)
-            this.players = [];
-            this.setState({ gameover: true })
+            delete this.players[a.index]
           }
+          
+          if(Object.keys(this.players).length === 0) {
+            this.setState({ gameover: true })
+          } 
         }
 
         if(a.label === 'wall' && ['bullet-player', 'bullet-enemy'].includes(b.label)) {
@@ -172,11 +210,34 @@ class Game extends Component {
           (a.label === 'door' && b.label === 'player')
         ) {
           let door = a.label === 'player' ? b : a;
+          let player = a.label === 'player' ? a : b;
+          let enteredRoom = this.rooms[door.targetRoom];
+
+          // if(+new Date() - player.lastDoorEntered < 100) return;
+          // player.lastDoorEntered = +new Date();
 
           if(!door.locked) {
             sound_door.play()
             this.cleanRoom()
-            this.setupRoom({ id: door.targetRoom, playerPosition: {
+
+            if(!enteredRoom.visited) {
+              let newDoor = generateDoor({ 
+                engine: this.engine,
+                render: this.renderer,
+                existingDoors: enteredRoom.doors,
+                targetRoom: this.rooms.length
+              });
+              this.rooms.push(generateRoom({ 
+                engine: this.engine,
+                render: this.renderer,
+                width: this.width,
+                height: this.height,
+                entrance: newDoor
+              }))
+              enteredRoom.doors.push(newDoor);
+            }
+
+            this.setupRoom({ id: door.targetRoom, door, playerPosition: {
               left: { x: this.width - 100, y: this.height / 2, },
               right: { x: 100, y: this.height / 2, },
               top: { x: this.width / 2, y: this.height - 100, },
@@ -186,37 +247,35 @@ class Game extends Component {
         }
 
         if(
-          (a.label === 'item' && b.label === 'player') ||
-          (a.label === 'player' && b.label === 'item')
+          (b.label === 'item' && a.label === 'player') ||
+          (a.label === 'item' && b.label === 'player')
         ) {
           let item = a.label === 'item' ? a : b;
           let player = a.label === 'player' ? a : b;
 
+          // if(+new Date() - player.lastItemLoop < 50) return;
+          // player.lastItemLoop = +new Date();
+          
           Composite.remove(this.engine.world, item)
 
           if(item.itemType === 'fatpill') {
             sound_drink_2.play();
-            this.players[0].activateEffect({ id: 'fatpill' })
             player.lifes = 1;
-            this.setState({ fatpill: true, lifes: player.lifes })
+            this.getPlayerById(player.id).activateEffect({ id: 'fatpill' })
           }
 
           if(item.itemType === 'life') {
             sound_drink_1.play();
-            this.setState({ lifes: this.state.lifes + 1 })
             player.lifes += 1;
           }
 
           if(item.itemType === 'bigshot') {
-            this.players[0].activateEffect({ id: 'bigshot' })
+            this.getPlayerById(player.id).activateEffect({ id: 'bigshot' })
           }
 
-          for (let i = 0; i < room.items.length; i++) {
-            if(
-              room.items[i].body.id === item.id ||
-              room.items[i].body.id === item.parent.id
-             ) {
-              room.items.splice(i, 1);
+          for (let i = 0; i < currentRoom.items.length; i++) {
+            if(currentRoom.items[i].body.id === item.id) {
+              currentRoom.items.splice(i, 1);
               break;
             }
           }
@@ -273,30 +332,36 @@ class Game extends Component {
     // this.start();
   }
 
-  async start() {
+  start() {
     sound_start.play()
-    sound_bg.stop()
-    sound_bg.play()
+    // sound_bg.stop()
+    // sound_bg.play()
+    
+    let gp = gamepad.getState();
 
-    let player = new Player({
-      engine: this.engine,
-      render: this.render
-    }, { 
-      x: this.width / 2, 
-      y: this.height / 2 
+    gp.gamepads.forEach((g, i) => {
+      let player = new Player({
+        engine: this.engine,
+        render: this.render,
+        index: g.index
+      }, { 
+        color: COLOR_PLAYERS[i],
+        x: random(100, this.width - 100), 
+        y: random(100, this.height - 100)
+      })
+      this.players[g.index] = player;
     })
-    this.players.push(player);
 
     Engine.clear(this.engine);
 
     this.setState({ 
       loading: true,
       lastUlti: +new Date(),
-      lifes: player.body.lifes,
+      // lifes: player.body.lifes,
       gameover: false,
     })
 
-    this.rooms = await generateRooms({
+    this.rooms = generateRooms({
       engine: this.engine,
       render: this.renderer,
       width: this.width,
@@ -306,21 +371,32 @@ class Game extends Component {
     this.setupCollisions();
 
     this.cleanRoom()
+    this.rooms.push(generateRoom({ 
+      engine: this.engine,
+      render: this.renderer,
+      width: this.width,
+      height: this.height,
+      entrance: this.rooms[0].doors[0]
+    }))
     this.setupRoom({
-      id: 0, 
-      playerPosition: { x: this.width / 2, y: this.height / 2 } 
+      id: 0,
+      playerPosition: { x: this.width / 2, y: this.height / 2 }
     })
 
     this.setState({ loading: false })
   }
-
+  
   render() {
+    const lifeEmojis = ['💜', '❤️', '💙', '💛'];
+    
     return (
       <div>
         <div style={{ position: 'absolute' }}>
           { this.state.gamepadConnected && !this.state.loading && !this.state.gameover &&
             <div>
-              {range(this.state.lifes).map(l => this.state.fatpill ? '💜' : '❤️' )} 
+              {Object.keys(this.players).map((i) => {
+                return <div key={i}>{range(this.players[i].body.lifes).map(l => lifeEmojis[i])}</div>
+              })} 
               {+new Date() - this.state.lastUlti >= 10000 && '💊'}
               {+new Date() - this.state.lastUlti < 10000 && 10 - Math.round((+new Date() - this.state.lastUlti) / 1000)}
             </div>

@@ -1,6 +1,7 @@
 import { 
   Bodies,
   Body,
+  Common
 } from 'matter-js';
 
 import Enemy from './Enemy'
@@ -56,7 +57,7 @@ export default class EnemyShooter extends Enemy {
   update(players) {
     super.update();
 
-    let focusPlayer = players[random(0, players.length - 1)];
+    let focusPlayer = players[Common.choose(Object.keys(players))];
     let timestamp = +new Date();
 
     // movement
