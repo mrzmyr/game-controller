@@ -9,14 +9,29 @@ import {
   Body
 } from 'matter-js';
 
+import styled from 'styled-components';
+
 import Player from './components/Player';
 import gamepad from './services/gamepad';
-import { generateRooms, generateRoom, generateDoor } from './roomGenerator';
+
+import RoomFactory from './services/RoomFactory.js'
 
 import { range, random } from './helpers';
 import { COLOR_BG, COLOR_WALLS, COLOR_PLAYERS } from './colors';
 
 import { Howl } from 'howler';
+
+const MapItem = styled.span`
+  font-family: monospace;
+  width: 25px;
+  height: 25px;
+  display: inline-block;
+  font-weight: ${props => props.highlight ? 'bold' : 'normal'};
+  display: inline-block;
+  color: #FFF;
+  text-align: center;
+  background: ${props => props.highlight ? 'red' : '#000'};
+`
 
 var sound_drink_1 = new Howl({ src: ['./sounds/bubble.wav'] });
 var sound_drink_2 = new Howl({ src: ['./sounds/bottle.wav'] });
@@ -67,7 +82,7 @@ class Game extends Component {
     
     this.currentRoomIndex = id;
     this.rooms[this.currentRoomIndex].visited = true;
-    let room = this.rooms[this.currentRoomIndex];
+    let currenRoom = this.rooms[this.currentRoomIndex];
 
     gp.gamepads.forEach((g, i) => {
       if(this.players[i]) return;
@@ -89,12 +104,12 @@ class Game extends Component {
       Body.setPosition(p.body, { x: playerPosition.x, y: playerPosition.y })
     })
 
-    room.doors.forEach(c => c.addToWorld())
-    room.items.forEach(c => c.addToWorld())
-    room.enemies.forEach(c => c.addToWorld())
+    currenRoom.doors.forEach(c => c.addToWorld())
+    currenRoom.items.forEach(c => c.addToWorld())
+    currenRoom.enemies.forEach(c => c.addToWorld())
 
-    if(room.enemies.length === 0) {
-      room.doors.forEach(d => d.unlock())
+    if(currenRoom.enemies.length === 0) {
+      currenRoom.doors.forEach(d => d.unlock())
     }
   }
 
@@ -180,10 +195,11 @@ class Game extends Component {
         }
 
         if(a.label === 'player' && b.label === 'bullet-enemy') {
+          console.log(a,b);
           if(this.state.gameover) return;
           
-          // if(+new Date() - a.lastHit < 100) return;
-          // a.lastHit = +new Date();
+          if(+new Date() - a.lastHit < 100) return;
+          a.lastHit = +new Date();
 
           sound_hit.play()
           Composite.remove(this.engine.world, b)
@@ -213,29 +229,12 @@ class Game extends Component {
           let player = a.label === 'player' ? a : b;
           let enteredRoom = this.rooms[door.targetRoom];
 
-          // if(+new Date() - player.lastDoorEntered < 100) return;
-          // player.lastDoorEntered = +new Date();
+          if(+new Date() - player.lastDoorEntered < 100) return;
+          player.lastDoorEntered = +new Date();
 
           if(!door.locked) {
             sound_door.play()
             this.cleanRoom()
-
-            if(!enteredRoom.visited) {
-              let newDoor = generateDoor({ 
-                engine: this.engine,
-                render: this.renderer,
-                existingDoors: enteredRoom.doors,
-                targetRoom: this.rooms.length
-              });
-              this.rooms.push(generateRoom({ 
-                engine: this.engine,
-                render: this.renderer,
-                width: this.width,
-                height: this.height,
-                entrance: newDoor
-              }))
-              enteredRoom.doors.push(newDoor);
-            }
 
             this.setupRoom({ id: door.targetRoom, door, playerPosition: {
               left: { x: this.width - 100, y: this.height / 2, },
@@ -253,8 +252,8 @@ class Game extends Component {
           let item = a.label === 'item' ? a : b;
           let player = a.label === 'player' ? a : b;
 
-          // if(+new Date() - player.lastItemLoop < 50) return;
-          // player.lastItemLoop = +new Date();
+          if(+new Date() - player.lastItemLoop < 50) return;
+          player.lastItemLoop = +new Date();
           
           Composite.remove(this.engine.world, item)
 
@@ -329,7 +328,7 @@ class Game extends Component {
         Engine.update(this.engine, 1000 / 60);
     }.bind(this))();
 
-    // this.start();
+    this.start();
   }
 
   start() {
@@ -337,6 +336,15 @@ class Game extends Component {
     // sound_bg.stop()
     // sound_bg.play()
     
+    let roomFactory = new RoomFactory({ 
+      engine: this.engine, 
+      render: this.renderer
+    });
+
+    let { rooms, map } = roomFactory.generateRooms()
+    this.rooms = rooms;
+    this.setState({ map })
+
     let gp = gamepad.getState();
 
     gp.gamepads.forEach((g, i) => {
@@ -354,30 +362,16 @@ class Game extends Component {
 
     Engine.clear(this.engine);
 
-    this.setState({ 
+    this.setState({
       loading: true,
       lastUlti: +new Date(),
       // lifes: player.body.lifes,
       gameover: false,
     })
 
-    this.rooms = generateRooms({
-      engine: this.engine,
-      render: this.renderer,
-      width: this.width,
-      height: this.height
-    });
-
     this.setupCollisions();
 
     this.cleanRoom()
-    this.rooms.push(generateRoom({ 
-      engine: this.engine,
-      render: this.renderer,
-      width: this.width,
-      height: this.height,
-      entrance: this.rooms[0].doors[0]
-    }))
     this.setupRoom({
       id: 0,
       playerPosition: { x: this.width / 2, y: this.height / 2 }
@@ -399,6 +393,14 @@ class Game extends Component {
               })} 
               {+new Date() - this.state.lastUlti >= 10000 && '💊'}
               {+new Date() - this.state.lastUlti < 10000 && 10 - Math.round((+new Date() - this.state.lastUlti) / 1000)}
+              {this.state.map.map((yaxes, y) => {
+                return <div>{
+                  yaxes.map((xaxes, x) => {
+                    // return <MapItem highlight={this.currentRoomIndex === xaxes}>{xaxes >= 0 && this.rooms[xaxes].visited ? xaxes : '?'}</MapItem>
+                    return <MapItem highlight={this.currentRoomIndex === xaxes}>{xaxes}</MapItem>
+                  })
+                }</div>
+              })}
             </div>
           }
           {!this.state.gamepadConnected && <code>Please connect gamepad</code>}
